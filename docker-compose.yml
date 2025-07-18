@@ -2,7 +2,6 @@ version: "3.9"
 
 services:
   songduplicatecheckerv2:
-    build: .
     image: ghcr.io/rudyscoggins/songduplicatecheckerv2:latest
     labels:
       - com.centurylinklabs.watchtower.scope=songduplicatecheckerv2
