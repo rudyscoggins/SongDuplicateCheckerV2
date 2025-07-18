@@ -1,0 +1,124 @@
+body {
+  font-family: sans-serif;
+  margin: 1em auto;
+  padding: 0 1em;
+  max-width: 800px;
+  background-color: #000;
+  color: lime;
+}
+
+form {
+  margin-bottom: 1em;
+}
+
+input[type="text"] {
+  width: 100%;
+  max-width: 600px;
+  box-sizing: border-box;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  text-align: left;
+  padding: 0.25em 0.5em;
+}
+
+@media (max-width: 600px) {
+  body {
+    margin: 0.5em;
+  }
+
+  .approval-actions form {
+    display: block;
+  }
+}
+
+#alerts {
+  position: fixed;
+  top: 1em;
+  right: 1em;
+  z-index: 1000;
+}
+
+#alerts p {
+  color: lime;
+  border: 1px solid lime;
+  padding: 0.5em;
+  margin: 0;
+  background-color: #111;
+  border-radius: 4px;
+}
+
+.approval-actions form {
+  margin-bottom: 1em;
+}
+
+footer {
+  margin-top: 2em;
+  font-size: 0.9em;
+  color: #9f9;
+}
+
+#spinner {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ccc;
+  border-top-color: #333;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 0.5em;
+}
+
+#spinner.htmx-request {
+  display: inline-block;
+}
+
+#list-spinner {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ccc;
+  border-top-color: #333;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 1em 0;
+}
+
+#list-spinner.htmx-request {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.album-art {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+}
+
+/* Styling for the track table */
+.track-table {
+  background-color: #333;
+}
+
+.track-table th,
+.track-table td {
+  border: 1px solid #666;
+}
+
+/* Group box for edit fields */
+#multi-edit fieldset.edit-fields {
+  border: 1px solid lime;
+  padding: 0.5em;
+  margin-bottom: 1em;
+  border-radius: 4px;
+}

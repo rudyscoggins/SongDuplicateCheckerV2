@@ -1,0 +1,74 @@
+{% if tracks %}
+<table class="track-table">
+  <thead>
+    <tr>
+      <th><label><input type="checkbox" id="select-all"> Select All</label></th>
+      <th>Art</th>
+      <th>Artist</th>
+      <th>Album</th>
+      <th>Title</th>
+      <th>Filepath</th>
+      <th>Check</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for track in tracks %}
+    <tr>
+      <td><input type="checkbox" name="track" value="{{ track.filepath }}"></td>
+      <td>
+        {% if track.cover %}
+          <img src="{{ track.cover }}" alt="cover" class="album-art">
+        {% else %}
+          &mdash;
+        {% endif %}
+      </td>
+      <td data-field="artist" class="editable-field">{{ track.artist }}</td>
+      <td data-field="album" class="editable-field">{{ track.album }}</td>
+      <td data-field="title" class="editable-field">{{ track.title }}</td>
+      <td>{{ track.filepath }}</td>
+      <td>
+        <button type="button" class="check-btn"
+                hx-get="/check?filepath={{ track.filepath | urlencode }}"
+                hx-target="#alerts" hx-swap="innerHTML">Check</button>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<form id="multi-edit" hx-post="/edit-multiple" hx-swap="none"
+      hx-include="[name=track]:checked"
+      hx-on:afterRequest="document.body.dispatchEvent(new Event('refreshStaging'))"
+      enctype="multipart/form-data" hx-encoding="multipart/form-data">
+  <fieldset class="edit-fields">
+    <div>
+      <label><input type="checkbox" name="artist_enable"> Artist</label>
+      <input type="text" name="artist_value"></div>
+    <div>
+      <label><input type="checkbox" name="album_enable"> Album</label>
+      <input type="text" name="album_value"></div>
+    <div>
+      <label><input type="checkbox" name="title_enable"> Title</label>
+      <input type="text" name="title_value"></div>
+    <div>
+      <label><input type="checkbox" name="art_enable"> Album Art</label>
+      <input type="file" name="art_file" accept="image/*"></div>
+  </fieldset>
+  <button id="edit-btn" type="submit"{% if not tracks %} disabled{% endif %}>Edit Track(s)</button>
+</form>
+{% else %}
+<p id="no-tracks">No tracks found</p>
+{% endif %}
+
+<h3>Approve staged tracks</h3>
+<div class="approval-actions">
+  <form hx-post="/approve" hx-target="#alerts" hx-swap="innerHTML">
+    <button id="approve-btn" type="submit"{% if not tracks %} disabled{% endif %}>Approve & Move All</button>
+  </form>
+  <form hx-post="/approve-selected" hx-target="#alerts" hx-swap="innerHTML"
+        hx-include="[name=track]:checked">
+    <button id="approve-selected-btn" type="submit"{% if not tracks %} disabled{% endif %}>Approve & Move Selected</button>
+  </form>
+  <form hx-post="/delete" hx-target="#alerts" hx-swap="innerHTML">
+    <button type="submit">Unapprove and Delete Staging</button>
+  </form>
+</div>
