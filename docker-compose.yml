@@ -20,9 +20,11 @@ services:
     image: containrrr/watchtower:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /home/pi/.docker/config.json:/config.json:ro
     env_file:
       - .env
     command: >
       --interval 180
       --scope songduplicatecheckerv2
-      --notifications shoutrrr      --notification-url=telegram://${WATCHTOWER_TELEGRAM_TOKEN}@telegram?channels=${WATCHTOWER_TELEGRAM_CHAT_ID}
+      --notifications shoutrrr      
+      --notification-url=telegram://${WATCHTOWER_TELEGRAM_TOKEN}@telegram?channels=${WATCHTOWER_TELEGRAM_CHAT_ID}
