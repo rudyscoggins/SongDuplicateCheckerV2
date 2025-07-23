@@ -15,7 +15,6 @@ services:
     ports:
       - "5425:8000"
 
-
   watchtower:
     image: containrrr/watchtower:latest
     volumes:
