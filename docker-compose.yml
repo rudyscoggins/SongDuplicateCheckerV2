@@ -2,15 +2,22 @@ version: "3.9"
 
 services:
   songduplicatecheckerv2:
-    image: ghcr.io/rudyscoggins/songduplicatecheckerv2:latest
-    labels:
-      - com.centurylinklabs.watchtower.scope=songduplicatecheckerv2
+    # ---- build the image from the Dockerfile in this directory ----
+    build:
+      context: .              # path to your source code & Dockerfile
+      dockerfile: Dockerfile  # omit if the file is literally called “Dockerfile”
+      # platform: linux/arm64  # uncomment if your Dockerfile isn’t multi-arch
+    image: songduplicatecheckerv2:local   # local tag so Compose can reuse layers
+
     restart: unless-stopped
+
     environment:
       DATA_DIR: /data
       NAS_PATH: /music
+
     volumes:
       - ./data:/data
       - /home/pi/NAS/music/Elysium:/music
+
     ports:
       - "5425:8000"
