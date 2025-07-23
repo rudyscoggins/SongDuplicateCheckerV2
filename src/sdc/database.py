@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Iterator, Optional
+
+import sqlite3
+
+from .scanner import yield_audio_files
 
 try:  # pragma: no cover - when ``sqlmodel`` is installed
     from sqlmodel import SQLModel, Field, Session, create_engine
@@ -57,4 +61,33 @@ def open_db(db_path: str | Path = "sdc.db") -> object:
     return engine
 
 
-__all__ = ["open_db", "Track"]
+def scan_to_db(root: str | Path, engine: object) -> None:
+    """Insert or update :class:`Track` rows for files under ``root``.
+
+    Parameters
+    ----------
+    root:
+        Directory to scan recursively for audio files.
+    engine:
+        Database engine returned by :func:`open_db`.
+    """
+
+    url = getattr(engine, "url", engine)
+    if isinstance(url, str) and url.startswith("sqlite:///"):
+        db_path = Path(url.replace("sqlite:///", ""))
+    else:
+        db_path = Path(str(url))
+
+    with sqlite3.connect(db_path) as conn:
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS track (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT UNIQUE)"
+        )
+        for file in yield_audio_files(root):
+            conn.execute(
+                "INSERT OR IGNORE INTO track(path) VALUES (?)",
+                (str(file),),
+            )
+        conn.commit()
+
+
+__all__ = ["open_db", "scan_to_db", "Track"]
