@@ -1,0 +1,22 @@
+name: Deploy to RPIZelda
+
+on:
+  push:
+    branches: [main]   # fires right after a PR merge
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, rpizelda]   # must match the label you set earlier
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pull code + rebuild containers
+        run: |
+          echo "Stopping existing containers"
+          docker compose down || true
+
+          echo "Ensuring we're on the latest commit"
+          git pull --ff-only
+
+          echo "Rebuilding & starting containers"
+          docker compose up -d --build
