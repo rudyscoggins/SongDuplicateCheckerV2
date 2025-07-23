@@ -11,8 +11,11 @@ from .scanner import yield_audio_files
 from hash import path_hash
 
 try:  # pragma: no cover - when ``sqlmodel`` is installed
+    from sqlalchemy import MetaData
     from sqlmodel import SQLModel, Field, Session, create_engine
-    
+
+    metadata_obj = MetaData()
+
     def orm_model(cls):
         return cls
 except Exception:  # pragma: no cover - allow running without dependency
@@ -37,13 +40,17 @@ except Exception:  # pragma: no cover - allow running without dependency
         def __exit__(self, exc_type, exc, tb):
             pass
 
+    metadata_obj = None
+
     def orm_model(cls):
         return dataclass(cls)
 
 
 @orm_model
-class Track(SQLModel, table=True):
+class Track(SQLModel, table=True, metadata=metadata_obj):
     """Minimal track model."""
+
+    __table_args__ = {"extend_existing": True}
 
     path: str
     path_hash: str
@@ -57,7 +64,10 @@ def open_db(db_path: str | Path = "sdc.db") -> object:
     """
     engine = create_engine(f"sqlite:///{Path(db_path)}")
     try:
-        SQLModel.metadata.create_all(engine)
+        if metadata_obj is not None:
+            metadata_obj.create_all(engine)
+        else:
+            SQLModel.metadata.create_all(engine)
     except Exception:
         pass
     return engine
@@ -75,7 +85,9 @@ def scan_to_db(root: str | Path, engine: object) -> None:
     """
 
     url = getattr(engine, "url", engine)
-    if isinstance(url, str) and url.startswith("sqlite:///"):
+    if hasattr(url, "database"):
+        db_path = Path(url.database)
+    elif isinstance(url, str) and url.startswith("sqlite:///"):
         db_path = Path(url.replace("sqlite:///", ""))
     else:
         db_path = Path(str(url))
