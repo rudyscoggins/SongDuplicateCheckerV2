@@ -8,6 +8,7 @@ from typing import Iterator, Optional
 import sqlite3
 
 from .scanner import yield_audio_files
+from hash import path_hash
 
 try:  # pragma: no cover - when ``sqlmodel`` is installed
     from sqlmodel import SQLModel, Field, Session, create_engine
@@ -45,6 +46,7 @@ class Track(SQLModel, table=True):
     """Minimal track model."""
 
     path: str
+    path_hash: str
     id: Optional[int] = Field(default=None, primary_key=True)
 
 
@@ -80,12 +82,19 @@ def scan_to_db(root: str | Path, engine: object) -> None:
 
     with sqlite3.connect(db_path) as conn:
         conn.execute(
-            "CREATE TABLE IF NOT EXISTS track (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT UNIQUE)"
+            "CREATE TABLE IF NOT EXISTS track ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            "path TEXT UNIQUE, "
+            "path_hash TEXT"
+            ")"
         )
         for file in yield_audio_files(root):
             conn.execute(
-                "INSERT OR IGNORE INTO track(path) VALUES (?)",
-                (str(file),),
+                "INSERT OR IGNORE INTO track(path, path_hash) VALUES (?, ?)",
+                (
+                    str(file),
+                    path_hash(Path(file).relative_to(root)),
+                ),
             )
         conn.commit()
 
