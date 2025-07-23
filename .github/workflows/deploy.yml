@@ -1,22 +1,43 @@
 name: Deploy to RPIZelda
 
+# ---- 1. set the canonical path for this app on the Pi ----
+env:
+  APP_DIR: /home/pi/docker/SongDuplicateCheckerV2   # <- matches where you edited with nano
+
 on:
   push:
-    branches: [main]   # fires right after a PR merge
+    branches: [main]          # fire right after a PR merge
 
 jobs:
   deploy:
-    runs-on: [self-hosted, rpizelda]   # must match the label you set earlier
+    runs-on: [self-hosted, rpizelda]
+
+    # All run-steps inherit this working dir unless overridden
+    defaults:
+      run:
+        working-directory: ${{ env.APP_DIR }}
+
     steps:
-      - uses: actions/checkout@v4
+    # ---- 2. Check the repo out *to that same folder* ----
+    - uses: actions/checkout@v4
+      with:
+        path: ${{ env.APP_DIR }}
 
-      - name: Pull code + rebuild containers
-        run: |
-          echo "Stopping existing containers"
-          docker compose down || true
+    # ---- 3. (optional) pull newer images from GHCR ----
+    # keep this if docker-compose.yml still points at
+    #   image: ghcr.io/rudyscoggins/songduplicatecheckerv2:latest
+    - name: Log in to ghcr.io
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | \
+           docker login ghcr.io -u "${{ github.repository_owner }}" --password-stdin
 
-          echo "Ensuring we're on the latest commit"
-          git pull --ff-only
+    # ---- 4. Stop, pull, rebuild, force-recreate ----
+    - name: Pull, rebuild, restart
+      run: |
+        echo "Stopping existing containers"
+        docker compose down --remove-orphans || true
 
-          echo "Rebuilding & starting containers"
-          docker compose up -d --build
+        echo "Pulling any newer images"
+        docker compose pull --quiet          # skip if you switched to local builds
+
+        echo "Building / recreating containers"
+        docker compose up -d --build --force-recreate --pull always
