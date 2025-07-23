@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from sdc.database import open_db, scan_to_db
+from hash import path_hash
 
 
 
@@ -20,8 +21,11 @@ def test_scan_to_db_inserts_files(tmp_path):
         f.write_text("x")
     scan_to_db(tmp_path, engine)
     with sqlite3.connect(db) as conn:
-        rows = sorted(r[0] for r in conn.execute("SELECT path FROM track"))
-    assert rows == [str(f1), str(f2)]
+        rows = sorted(conn.execute("SELECT path, path_hash FROM track").fetchall())
+    assert rows == [
+        (str(f1), path_hash(f1.relative_to(tmp_path))),
+        (str(f2), path_hash(f2.relative_to(tmp_path))),
+    ]
 
 
 def test_scan_to_db_is_idempotent(tmp_path):
