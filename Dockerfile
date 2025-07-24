@@ -9,4 +9,4 @@ RUN apt-get update && \
 WORKDIR /app
 COPY src /app/src
 ENV PYTHONPATH=/app/src
-CMD ["uvicorn", "sdc.api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "sdc.api:app", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "src"]
