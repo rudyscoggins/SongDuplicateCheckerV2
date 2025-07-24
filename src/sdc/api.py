@@ -64,6 +64,12 @@ def scan_progress(job_id: int) -> HTMLResponse:
     return HTMLResponse(html)
 
 
+@app.get("/duplicates_table", response_class=HTMLResponse)
+def duplicates_table(request: Request) -> HTMLResponse:
+    """Render the duplicates table page."""
+    return templates.TemplateResponse("duplicates.html", {"request": request})
+
+
 @app.get("/duplicates")
 def list_duplicates() -> dict[str, object]:
     """Return groups of duplicate tracks with metadata."""
