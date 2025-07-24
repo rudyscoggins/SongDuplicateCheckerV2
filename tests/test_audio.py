@@ -10,12 +10,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import audio
 
 
-def test_fingerprint_same_audio(tmp_path, monkeypatch):
+def test_fingerprint_same_audio(monkeypatch, mp3_file, flac_file):
     seg = Sine(440).to_audio_segment(duration=1000)
-    flac = tmp_path / "test.flac"
-    mp3 = tmp_path / "test.mp3"
-    flac.touch()
-    mp3.touch()
+    flac = flac_file
+    mp3 = mp3_file
 
     def fake_from_file(path):
         assert Path(path) in {flac, mp3}
