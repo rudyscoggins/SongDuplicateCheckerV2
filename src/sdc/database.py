@@ -57,6 +57,19 @@ class Track(SQLModel, table=True, metadata=metadata_obj):
     id: Optional[int] = Field(default=None, primary_key=True)
 
 
+@orm_model
+class ScanJob(SQLModel, table=True, metadata=metadata_obj):
+    """Model tracking progress of a directory scan."""
+
+    __table_args__ = {"extend_existing": True}
+
+    root: str
+    total: int = Field(default=0)
+    done: int = Field(default=0)
+    status: str = Field(default="pending")
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+
 def open_db(db_path: str | Path = "sdc.db") -> object:
     """Return an engine connected to ``db_path``.
 
@@ -70,6 +83,31 @@ def open_db(db_path: str | Path = "sdc.db") -> object:
             SQLModel.metadata.create_all(engine)
     except Exception:
         pass
+    url = getattr(engine, "url", engine)
+    if hasattr(url, "database"):
+        path = Path(url.database)
+    elif isinstance(url, str) and url.startswith("sqlite:///"):
+        path = Path(url.replace("sqlite:///", ""))
+    else:
+        path = Path(str(url))
+    with sqlite3.connect(path) as conn:
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS scan_job (" 
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            "root TEXT, "
+            "total INTEGER, "
+            "done INTEGER, "
+            "status TEXT"
+            ")"
+        )
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS track ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            "path TEXT UNIQUE, "
+            "path_hash TEXT"
+            ")"
+        )
+        conn.commit()
     return engine
 
 
@@ -111,4 +149,4 @@ def scan_to_db(root: str | Path, engine: object) -> None:
         conn.commit()
 
 
-__all__ = ["open_db", "scan_to_db", "Track"]
+__all__ = ["open_db", "scan_to_db", "Track", "ScanJob"]
