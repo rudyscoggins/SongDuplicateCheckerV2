@@ -26,13 +26,21 @@
         e.preventDefault();
         const form = e.target;
         const data = new FormData(form);
+        const root = data.get('root');
+        const progress = document.getElementById('progress');
+        progress.innerHTML = 'Checking NAS...';
+        const checkResp = await fetch(`/scan/check?root=${encodeURIComponent(root)}`);
+        const check = await checkResp.json();
+        if(!check.found){
+            progress.innerHTML = 'No song files found. Please check the NAS path.';
+            return;
+        }
+        progress.innerHTML = 'Found song successfully. Starting scan...';
         const resp = await fetch('/scan', {method: 'POST', body: data});
         const result = await resp.json();
-        const progress = document.getElementById('progress');
         progress.setAttribute('hx-get', `/scan/${result.task_id}/progress`);
         progress.setAttribute('hx-trigger', 'load, every 1s');
         progress.setAttribute('hx-swap', 'innerHTML');
-        progress.innerHTML = 'Starting scan...';
         htmx.process(progress);
     });
     </script>
