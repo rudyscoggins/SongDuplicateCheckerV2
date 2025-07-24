@@ -6,6 +6,7 @@ import os
 import sqlite3
 
 from .worker import start_scan, get_status
+from .scanner import AUDIO_EXTS
 from .database import open_db, Session
 from duplicate_finder import find_duplicates, _get_db_path
 from songripper.media import read_media_info
@@ -26,6 +27,19 @@ def health():
 def scan_page(request: Request) -> HTMLResponse:
     """Render the scan page."""
     return templates.TemplateResponse("scan.html", {"request": request})
+
+
+@app.get("/scan/check")
+def scan_check(root: str) -> dict[str, bool]:
+    """Return ``{"found": True}`` if ``root`` contains any audio file."""
+    path = Path(root)
+    try:
+        for p in path.rglob("*"):
+            if p.is_file() and p.suffix.lower() in AUDIO_EXTS:
+                return {"found": True}
+    except Exception:
+        pass
+    return {"found": False}
 
 
 @app.post("/scan")
@@ -59,7 +73,7 @@ def scan_progress(job_id: int) -> HTMLResponse:
             "<div class='w-full bg-gray-200 rounded-full h-4'>"
             f"<div class='bg-blue-600 h-4 rounded-full' style='width: {percent}%'></div>"
             "</div>"
-            f"<p class='text-sm mt-1'>{done}/{total} files</p>"
+            f"<p class='text-sm mt-1'>Scanning directory for new songs... {done}/{total} files</p>"
         )
     return HTMLResponse(html)
 
