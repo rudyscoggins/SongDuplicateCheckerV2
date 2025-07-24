@@ -1,4 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from pathlib import Path
 import os
 import sqlite3
 
@@ -8,6 +11,7 @@ from duplicate_finder import find_duplicates, _get_db_path
 from songripper.media import read_media_info
 
 app = FastAPI()
+templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
 @app.get("/")
 def read_root():
@@ -16,6 +20,12 @@ def read_root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/scan", response_class=HTMLResponse)
+def scan_page(request: Request) -> HTMLResponse:
+    """Render the scan page."""
+    return templates.TemplateResponse("scan.html", {"request": request})
 
 
 @app.post("/scan")
@@ -29,6 +39,29 @@ def scan(root: str) -> dict[str, int]:
 def scan_status(job_id: int) -> dict[str, object]:
     engine = open_db()
     return get_status(job_id, engine)
+
+
+@app.get("/scan/{job_id}/progress", response_class=HTMLResponse)
+def scan_progress(job_id: int) -> HTMLResponse:
+    """Return HTML snippet showing progress for ``job_id``."""
+    engine = open_db()
+    status = get_status(job_id, engine)
+    total = status.get("total", 0) or 0
+    done = status.get("done", 0) or 0
+    percent = int(done / total * 100) if total else 0
+    if status.get("status") == "done":
+        html = (
+            f"<div class='w-full bg-green-500 text-white text-center py-2 rounded'>"
+            f"Scan complete: {done} files</div>"
+        )
+    else:
+        html = (
+            "<div class='w-full bg-gray-200 rounded-full h-4'>"
+            f"<div class='bg-blue-600 h-4 rounded-full' style='width: {percent}%'></div>"
+            "</div>"
+            f"<p class='text-sm mt-1'>{done}/{total} files</p>"
+        )
+    return HTMLResponse(html)
 
 
 @app.get("/duplicates")
