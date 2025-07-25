@@ -5,6 +5,8 @@ from pathlib import Path
 import os
 import sqlite3
 
+from songripper.settings import NAS_PATH
+
 from .worker import start_scan, get_status
 from .scanner import AUDIO_EXTS
 from .database import open_db, Session
@@ -26,7 +28,9 @@ def health():
 @app.get("/scan", response_class=HTMLResponse)
 def scan_page(request: Request) -> HTMLResponse:
     """Render the scan page."""
-    return templates.TemplateResponse("scan.html", {"request": request})
+    return templates.TemplateResponse(
+        "scan.html", {"request": request, "nas_path": str(NAS_PATH)}
+    )
 
 
 @app.get("/scan/check")
